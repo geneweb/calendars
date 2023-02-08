@@ -38,7 +38,7 @@ let _ =
                  else Array.get monthLength @@ (month - 1)
             do
               let d = make Julian ~day ~month ~year ~delta:0 in
-              let sdn' = sdn_of_julian d in
+              let sdn' = to_sdn d in
               assert_equal_sdn !sdn sdn';
               assert_equal_dmy d (julian_of_sdn sdn');
               incr sdn
