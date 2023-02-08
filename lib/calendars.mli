@@ -10,7 +10,9 @@ type t = private {
 
 type sdn = int
 
-val make : kind -> day:int -> month:int -> year:int -> delta:sdn -> t
+val make :
+  kind -> day:int -> month:int -> year:int -> delta:sdn -> (t, string) result
+
 val gregorian_of_sdn : sdn -> t
 val julian_of_sdn : sdn -> t
 val french_of_sdn : sdn -> t

@@ -487,8 +487,8 @@ let hebrew_of_gregorian = conv hebrew_of_sdn 13 sdn_of_gregorian 12
 let make kind ~day ~month ~year ~delta =
   if day < 1 || month < 1 || month > 13 || day > 31 then
     (* TODO more checks *)
-    failwith "invalid value"
-  else { day; month; year; delta; kind }
+    Error "invalid value"
+  else Ok { day; month; year; delta; kind }
 
 let to_sdn date =
   match date.kind with
