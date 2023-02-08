@@ -4,7 +4,9 @@
 (* Changed gregorian and julian to work always with negative years
    (Scott's version worked only for years > -4800 *)
 
-type d = { day : int; month : int; year : int; delta : int }
+type kind = Gregorian | Julian | French | Hebrew
+type t = { day : int; month : int; year : int; delta : int; kind : kind }
+type sdn = int
 
 let mydiv x y = if x >= 0 then x / y else (x - y + 1) / y
 let mymod x y = if x >= 0 then x mod y else ((x + 1) mod y) + y - 1
@@ -39,7 +41,7 @@ let gregorian_of_sdn sdn =
     if month < 10 then (month + 3, year) else (month - 9, year + 1)
   in
   let year = if year <= 0 then year - 1 else year in
-  { day; month; year; delta = 0 }
+  { day; month; year; delta = 0; kind = Gregorian }
 
 (* julian *)
 
@@ -67,7 +69,7 @@ let julian_of_sdn sdn =
     if month < 10 then (month + 3, year) else (month - 9, year + 1)
   in
   let year = if year <= 0 then year - 1 else year in
-  { day; month; year; delta = 0 }
+  { day; month; year; delta = 0; kind = Julian }
 
 (* french revolution *)
 (* this code comes from Remy Pialat; thanks to him *)
@@ -139,7 +141,7 @@ let french_of_sdn sdn =
   let ndays = sdn - fst_vend_sdn in
   let month = (ndays / 30) + 1 in
   let day = (ndays mod 30) + 1 in
-  { day; month; year; delta = 0 }
+  { day; month; year; delta = 0; kind = French }
 
 let sdn_of_french d =
   let greg_year = d.year + 1791 in
@@ -423,11 +425,21 @@ let hebrew_of_sdn sdn =
                 let month, day = glop inputDay tishri1 tishri1After in
                 (year, month, day)
   in
-  { day; month; year; delta = 0 }
+  { day; month; year; delta = 0; kind = Hebrew }
 
 (* from and to gregorian *)
 
 let conv f f_max_month g g_max_month d =
+  (* TODO: day|month = 0 are invalid;
+     we does that here because of geneweb
+     that uses day|month=0 for unknown dates;
+
+     I think we use delta to define an interval:
+       dmy for lower bound
+       to_sdn(dmy) + d.delta for upper bound (in SDN);
+
+     Looks buggy with day>0 and month =0
+  *)
   let sdn =
     if d.day = 0 then
       if d.month = 0 then g { d with day = 1; month = 1 }
@@ -437,22 +449,32 @@ let conv f f_max_month g g_max_month d =
   let sdn_max =
     if d.day = 0 then
       if d.month = 0 || d.month = g_max_month then
-        g { day = 1; month = 1; year = d.year + 1; delta = 0 }
-      else g { day = 1; month = d.month + 1; year = d.year; delta = 0 }
+        g { day = 1; month = 1; year = d.year + 1; delta = 0; kind = d.kind }
+      else
+        g
+          {
+            day = 1;
+            month = d.month + 1;
+            year = d.year;
+            delta = 0;
+            kind = d.kind;
+          }
     else sdn + 1
   in
   let d1 = f sdn in
-  let d2 = f (sdn_max + d.delta) in
+  let d2 = f (sdn_max + d.delta) (* delta is in sdn? *) in
+  let new_kind = d1.kind in
   if d1.day = 1 && d2.day = 1 then
     if d1.month = 1 && d2.month = 1 then
       if d1.year + 1 = d2.year then
-        { day = 0; month = 0; year = d1.year; delta = 0 }
+        { day = 0; month = 0; year = d1.year; delta = 0; kind = new_kind }
       else { d1 with delta = sdn_max + d.delta - sdn - 1 }
     else if
       d1.month + 1 = d2.month
       || (d1.month = f_max_month && d1.year + 1 = d2.year)
     then { d1 with day = 0 }
     else { d1 with delta = sdn_max + d.delta - sdn - 1 }
+      (* TODO why the -1 in delta *)
   else { d1 with delta = sdn_max + d.delta - sdn - 1 }
 
 let gregorian_of_julian = conv gregorian_of_sdn 12 sdn_of_julian 12
@@ -461,6 +483,12 @@ let gregorian_of_french = conv gregorian_of_sdn 12 sdn_of_french 13
 let french_of_gregorian = conv french_of_sdn 13 sdn_of_gregorian 12
 let gregorian_of_hebrew = conv gregorian_of_sdn 12 sdn_of_hebrew 13
 let hebrew_of_gregorian = conv hebrew_of_sdn 13 sdn_of_gregorian 12
+
+let make kind ~day ~month ~year ~delta =
+  if day < 1 || month < 1 || month > 13 || day > 31 then
+    (* TODO more checks *)
+    failwith "invalid value"
+  else { day; month; year; delta; kind }
 
 (* Moon phases *)
 (* Borrowed from G.Satre of CNRS's program found at:

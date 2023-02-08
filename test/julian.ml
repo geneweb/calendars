@@ -29,6 +29,7 @@ let _ =
       "Julian <-> SDN" >:: fun _ ->
       let sdn = ref 0 in
       for year = -4713 to 10000 do
+        (* TODO why year <> 0 *)
         if year <> 0 then
           for month = 1 to 12 do
             for
@@ -36,7 +37,7 @@ let _ =
               to if month = 2 then febLength year
                  else Array.get monthLength @@ (month - 1)
             do
-              let d = { day; month; year; delta = 0 } in
+              let d = make Julian ~day ~month ~year ~delta:0 in
               let sdn' = sdn_of_julian d in
               assert_equal_sdn !sdn sdn';
               assert_equal_dmy d (julian_of_sdn sdn');
