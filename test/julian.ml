@@ -37,7 +37,11 @@ let _ =
               to if month = 2 then febLength year
                  else Array.get monthLength @@ (month - 1)
             do
-              let d = make Julian ~day ~month ~year ~delta:0 in
+              let d =
+                match make Julian ~day ~month ~year ~delta:0 with
+                | Ok d -> d
+                | Error s -> failwith s
+              in
               let sdn' = to_sdn d in
               assert_equal_sdn !sdn sdn';
               assert_equal_dmy d (julian_of_sdn sdn');
