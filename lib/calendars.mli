@@ -1,20 +1,35 @@
-type d = { day : int; month : int; year : int; delta : int }
+type kind = Gregorian | Julian | French | Hebrew
 
-val gregorian_of_sdn : int -> d
-val julian_of_sdn : int -> d
-val french_of_sdn : int -> d
-val hebrew_of_sdn : int -> d
-val sdn_of_gregorian : d -> int
-val sdn_of_julian : d -> int
-val sdn_of_french : d -> int
-val sdn_of_hebrew : d -> int
-val gregorian_of_julian : d -> d
-val julian_of_gregorian : d -> d
-val gregorian_of_french : d -> d
-val french_of_gregorian : d -> d
-val gregorian_of_hebrew : d -> d
-val hebrew_of_gregorian : d -> d
+type t = private {
+  day : int;
+  month : int;
+  year : int;
+  delta : int;
+  kind : kind;
+}
+
+type sdn = int
+
+val make : kind -> day:int -> month:int -> year:int -> delta:sdn -> t
+val gregorian_of_sdn : sdn -> t
+val julian_of_sdn : sdn -> t
+val french_of_sdn : sdn -> t
+val hebrew_of_sdn : sdn -> t
+
+(* TODO to_sdn : t -> sdn *)
+val sdn_of_gregorian : t -> sdn
+val sdn_of_julian : t -> sdn
+val sdn_of_french : t -> sdn
+val sdn_of_hebrew : t -> sdn
+
+(* TODO to_gregorian : t -> t ... *)
+val gregorian_of_julian : t -> t
+val julian_of_gregorian : t -> t
+val gregorian_of_french : t -> t
+val french_of_gregorian : t -> t
+val gregorian_of_hebrew : t -> t
+val hebrew_of_gregorian : t -> t
 
 type moon_phase = NewMoon | FirstQuarter | FullMoon | LastQuarter
 
-val moon_phase_of_sdn : int -> (moon_phase * int * int) option * int
+val moon_phase_of_sdn : sdn -> (moon_phase * int * int) option * int
