@@ -490,6 +490,41 @@ let make kind ~day ~month ~year ~delta =
     failwith "invalid value"
   else { day; month; year; delta; kind }
 
+let to_sdn date =
+  match date.kind with
+  | Gregorian -> sdn_of_gregorian date
+  | Julian -> sdn_of_julian date
+  | French -> sdn_of_french date
+  | Hebrew -> sdn_of_hebrew date
+
+let to_gregorian date =
+  match date.kind with
+  | Gregorian -> date
+  | Julian -> gregorian_of_julian date
+  | French -> gregorian_of_french date
+  | Hebrew -> gregorian_of_hebrew date
+
+let to_julian date =
+  match date.kind with
+  | Gregorian -> julian_of_gregorian date
+  | Julian -> date
+  | French -> julian_of_gregorian @@ gregorian_of_french date
+  | Hebrew -> julian_of_gregorian @@ gregorian_of_hebrew date
+
+let to_french date =
+  match date.kind with
+  | Gregorian -> french_of_gregorian date
+  | Julian -> french_of_gregorian @@ gregorian_of_julian date
+  | French -> french_of_gregorian @@ gregorian_of_french date
+  | Hebrew -> french_of_gregorian @@ gregorian_of_hebrew date
+
+let to_hebrew date =
+  match date.kind with
+  | Gregorian -> hebrew_of_gregorian date
+  | Julian -> hebrew_of_gregorian @@ gregorian_of_julian date
+  | French -> hebrew_of_gregorian @@ gregorian_of_french date
+  | Hebrew -> date
+
 (* Moon phases *)
 (* Borrowed from G.Satre of CNRS's program found at:
    http://portail.imcce.fr/fr/ephemerides/astronomie/Promenade/pages4/441.html
