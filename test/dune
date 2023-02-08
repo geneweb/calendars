@@ -1,7 +1,5 @@
-(executable
-  (name test_julian)
+(tests
+  (names julian)
   (libraries ounit2 calendars)
-  (modules test_julian)
+  (modules julian)
 )
-
-(alias (name runtest) (action (run %{exe:test_julian.exe}) ) )
