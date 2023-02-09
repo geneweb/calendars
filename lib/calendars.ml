@@ -4,8 +4,25 @@
 (* Changed gregorian and julian to work always with negative years
    (Scott's version worked only for years > -4800 *)
 
-type kind = Gregorian | Julian | French | Hebrew
-type t = { day : int; month : int; year : int; delta : int; kind : kind }
+type gregorian
+type julian
+type french
+type hebrew
+
+type _ kind =
+  | Gregorian : gregorian kind
+  | Julian : julian kind
+  | French : french kind
+  | Hebrew : hebrew kind
+
+type 'a date = {
+  day : int;
+  month : int;
+  year : int;
+  delta : int;
+  kind : 'a kind;
+}
+
 type sdn = int
 
 let mydiv x y = if x >= 0 then x / y else (x - y + 1) / y
@@ -477,12 +494,23 @@ let conv f f_max_month g g_max_month d =
       (* TODO why the -1 in delta *)
   else { d1 with delta = sdn_max + d.delta - sdn - 1 }
 
-let gregorian_of_julian = conv gregorian_of_sdn 12 sdn_of_julian 12
-let julian_of_gregorian = conv julian_of_sdn 12 sdn_of_gregorian 12
-let gregorian_of_french = conv gregorian_of_sdn 12 sdn_of_french 13
-let french_of_gregorian = conv french_of_sdn 13 sdn_of_gregorian 12
-let gregorian_of_hebrew = conv gregorian_of_sdn 12 sdn_of_hebrew 13
-let hebrew_of_gregorian = conv hebrew_of_sdn 13 sdn_of_gregorian 12
+let gregorian_of_julian : julian date -> gregorian date =
+  conv gregorian_of_sdn 12 sdn_of_julian 12
+
+let julian_of_gregorian : gregorian date -> julian date =
+  conv julian_of_sdn 12 sdn_of_gregorian 12
+
+let gregorian_of_french : french date -> gregorian date =
+  conv gregorian_of_sdn 12 sdn_of_french 13
+
+let french_of_gregorian : gregorian date -> french date =
+  conv french_of_sdn 13 sdn_of_gregorian 12
+
+let gregorian_of_hebrew : hebrew date -> gregorian date =
+  conv gregorian_of_sdn 12 sdn_of_hebrew 13
+
+let hebrew_of_gregorian : gregorian date -> hebrew date =
+  conv hebrew_of_sdn 13 sdn_of_gregorian 12
 
 let make kind ~day ~month ~year ~delta =
   if day < 1 || month < 1 || month > 13 || day > 31 then
@@ -490,35 +518,40 @@ let make kind ~day ~month ~year ~delta =
     Error "invalid value"
   else Ok { day; month; year; delta; kind }
 
-let to_sdn date =
+let to_sdn : type a. a date -> sdn =
+ fun date ->
   match date.kind with
   | Gregorian -> sdn_of_gregorian date
   | Julian -> sdn_of_julian date
   | French -> sdn_of_french date
   | Hebrew -> sdn_of_hebrew date
 
-let to_gregorian date =
+let to_gregorian : type a. a date -> gregorian date =
+ fun date ->
   match date.kind with
   | Gregorian -> date
   | Julian -> gregorian_of_julian date
   | French -> gregorian_of_french date
   | Hebrew -> gregorian_of_hebrew date
 
-let to_julian date =
+let to_julian : type a. a date -> julian date =
+ fun date ->
   match date.kind with
   | Gregorian -> julian_of_gregorian date
   | Julian -> date
   | French -> julian_of_gregorian @@ gregorian_of_french date
   | Hebrew -> julian_of_gregorian @@ gregorian_of_hebrew date
 
-let to_french date =
+let to_french : type a. a date -> french date =
+ fun date ->
   match date.kind with
   | Gregorian -> french_of_gregorian date
   | Julian -> french_of_gregorian @@ gregorian_of_julian date
   | French -> french_of_gregorian @@ gregorian_of_french date
   | Hebrew -> french_of_gregorian @@ gregorian_of_hebrew date
 
-let to_hebrew date =
+let to_hebrew : type a. a date -> hebrew date =
+ fun date ->
   match date.kind with
   | Gregorian -> hebrew_of_gregorian date
   | Julian -> hebrew_of_gregorian @@ gregorian_of_julian date
