@@ -446,7 +446,8 @@ let hebrew_of_sdn sdn =
 
 (* from and to gregorian *)
 
-let conv f f_max_month g g_max_month d =
+let conv sdn_to_destination_date destination_max_month to_sdn source_max_month d
+    =
   (* TODO: day|month = 0 are invalid;
      we does that here because of geneweb
      that uses day|month=0 for unknown dates;
@@ -455,20 +456,29 @@ let conv f f_max_month g g_max_month d =
        dmy for lower bound
        to_sdn(dmy) + d.delta for upper bound (in SDN);
 
-     Looks buggy with day>0 and month =0
+     buggy with day>0 and month =0; this round trip fail:
+      # let d1 = Calendars.{day=1;month=0;year=1;delta=0};;
+      val d1 : Calendars.d = {Calendars.day = 1; month = 0; year = 1; delta = 0}
+      # let d2 = Calendars.hebrew_of_gregorian d1;;
+      val d2 : Calendars.d = {Calendars.day = 17; month = 3; year = 3761; delta = 0}
+      # let d2 = Calendars.gregorian_of_hebrew d2;;
+      val d2 : Calendars.d = {Calendars.day = 1; month = 12; year = -1; delta = 0}
   *)
-  let sdn =
+  let sdn_min =
+    to_sdn
+    @@
     if d.day = 0 then
-      if d.month = 0 then g { d with day = 1; month = 1 }
-      else g { d with day = 1 }
-    else g d
+      if d.month = 0 then { d with day = 1; month = 1 } else { d with day = 1 }
+    else d
   in
   let sdn_max =
+    (* TODO this do not work if day <> 0 and month = 0 *)
     if d.day = 0 then
-      if d.month = 0 || d.month = g_max_month then
-        g { day = 1; month = 1; year = d.year + 1; delta = 0; kind = d.kind }
+      if d.month = 0 || d.month = source_max_month then
+        to_sdn
+          { day = 1; month = 1; year = d.year + 1; delta = 0; kind = d.kind }
       else
-        g
+        to_sdn
           {
             day = 1;
             month = d.month + 1;
@@ -476,23 +486,22 @@ let conv f f_max_month g g_max_month d =
             delta = 0;
             kind = d.kind;
           }
-    else sdn + 1
+    else sdn_min + 1
   in
-  let d1 = f sdn in
-  let d2 = f (sdn_max + d.delta) (* delta is in sdn? *) in
+  let d1 = sdn_to_destination_date sdn_min in
+  let d2 = sdn_to_destination_date (sdn_max + d.delta) (* delta is in sdn? *) in
   let new_kind = d1.kind in
   if d1.day = 1 && d2.day = 1 then
     if d1.month = 1 && d2.month = 1 then
       if d1.year + 1 = d2.year then
         { day = 0; month = 0; year = d1.year; delta = 0; kind = new_kind }
-      else { d1 with delta = sdn_max + d.delta - sdn - 1 }
+      else { d1 with delta = sdn_max + d.delta - sdn_min - 1 }
     else if
       d1.month + 1 = d2.month
-      || (d1.month = f_max_month && d1.year + 1 = d2.year)
+      || (d1.month = destination_max_month && d1.year + 1 = d2.year)
     then { d1 with day = 0 }
-    else { d1 with delta = sdn_max + d.delta - sdn - 1 }
-      (* TODO why the -1 in delta *)
-  else { d1 with delta = sdn_max + d.delta - sdn - 1 }
+    else { d1 with delta = sdn_max + d.delta - sdn_min - 1 }
+  else { d1 with delta = sdn_max + d.delta - sdn_min - 1 }
 
 let gregorian_of_julian : julian date -> gregorian date =
   conv gregorian_of_sdn 12 sdn_of_julian 12
@@ -513,6 +522,12 @@ let hebrew_of_gregorian : gregorian date -> hebrew date =
   conv hebrew_of_sdn 13 sdn_of_gregorian 12
 
 let make kind ~day ~month ~year ~delta =
+  (* from wikipedia: "A year zero does not exist in the Anno Domini (AD) calendar year system commonly used to number years in the Gregorian calendar (nor in its predecessor, the Julian calendar)" *)
+  (* TODO year 0 in hebrew and french? *)
+  (* French: undefined if before 1er vendémiaire an I *)
+  (* Hebrew: ? *)
+  (* do we use year zero = 0 and negative date for BC here? *)
+  (* TODO should we fail on year = 0? *)
   if day < 1 || month < 1 || month > 13 || day > 31 then
     (* TODO more checks *)
     Error "invalid value"

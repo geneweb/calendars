@@ -29,7 +29,6 @@ let _ =
       "Julian <-> SDN" >:: fun _ ->
       let sdn = ref 0 in
       for year = -4713 to 10000 do
-        (* TODO why year <> 0 *)
         if year <> 0 then
           for month = 1 to 12 do
             for
