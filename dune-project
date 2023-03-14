@@ -14,7 +14,6 @@
   (description "OCaml library to convert dates between gregorian/julian/french/hebrew calendars. Code is originally from Geneweb.")
   (tags (moon-phase gregorian julian hebrew french-republican calendar date))
   (depends
-    (dune (>= "2.9.0"))
     (ocaml (>= 4.08))
     (ounit2 :with-test)
   ))

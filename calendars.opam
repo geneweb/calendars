@@ -22,7 +22,7 @@ tags: [
 homepage: "https://github.com/geneweb/calendars"
 bug-reports: "https://github.com/geneweb/calendars/issues"
 depends: [
-  "dune" {>= "2.9" & >= "2.9.0"}
+  "dune" {>= "2.9"}
   "ocaml" {>= "4.08"}
   "ounit2" {with-test}
   "odoc" {with-doc}
