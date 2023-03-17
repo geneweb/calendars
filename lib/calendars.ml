@@ -444,6 +444,14 @@ let hebrew_of_sdn sdn =
   in
   { day; month; year; delta = 0; kind = Hebrew }
 
+let kind_to_string : type a. a kind -> string =
+ fun kind ->
+  match kind with
+  | Gregorian -> "Gregorian"
+  | Julian -> "Julian"
+  | French -> "French"
+  | Hebrew -> "Hebrew"
+
 let make kind ~day ~month ~year ~delta =
   (* from wikipedia: "A year zero does not exist in the Anno Domini (AD) calendar year system commonly used to number years in the Gregorian calendar (nor in its predecessor, the Julian calendar)" *)
   (* TODO year 0 in hebrew and french? *)
@@ -453,7 +461,10 @@ let make kind ~day ~month ~year ~delta =
   (* TODO should we fail on year = 0? *)
   if day < 1 || month < 1 || month > 13 || day > 31 then
     (* TODO more checks *)
-    Error "invalid value"
+    Error
+      (Printf.sprintf
+         "Invalid value: day=%d month=%d year=%d delta=%d kind=%s" day
+         month year delta (kind_to_string kind))
   else Ok { day; month; year; delta; kind }
 
 let to_sdn : type a. a date -> sdn =
