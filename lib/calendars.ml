@@ -462,9 +462,8 @@ let make kind ~day ~month ~year ~delta =
   if day < 1 || month < 1 || month > 13 || day > 31 then
     (* TODO more checks *)
     Error
-      (Printf.sprintf
-         "Invalid value: day=%d month=%d year=%d delta=%d kind=%s" day
-         month year delta (kind_to_string kind))
+      (Printf.sprintf "Invalid value: day=%d month=%d year=%d delta=%d kind=%s"
+         day month year delta (kind_to_string kind))
   else Ok { day; month; year; delta; kind }
 
 let to_sdn : type a. a date -> sdn =
@@ -476,16 +475,28 @@ let to_sdn : type a. a date -> sdn =
   | Hebrew -> sdn_of_hebrew date
 
 let to_gregorian : type a. a date -> gregorian date =
- fun date -> to_sdn date |> gregorian_of_sdn
+ fun date ->
+  match date.kind with
+  | Gregorian -> date
+  | Julian | French | Hebrew -> to_sdn date |> gregorian_of_sdn
 
 let to_julian : type a. a date -> julian date =
- fun date -> to_sdn date |> julian_of_sdn
+ fun date ->
+  match date.kind with
+  | Julian -> date
+  | Gregorian | French | Hebrew -> to_sdn date |> julian_of_sdn
 
 let to_french : type a. a date -> french date =
- fun date -> to_sdn date |> french_of_sdn
+ fun date ->
+  match date.kind with
+  | French -> date
+  | Gregorian | Julian | Hebrew -> to_sdn date |> french_of_sdn
 
 let to_hebrew : type a. a date -> hebrew date =
- fun date -> to_sdn date |> hebrew_of_sdn
+ fun date ->
+  match date.kind with
+  | Hebrew -> date
+  | Gregorian | Julian | French -> to_sdn date |> hebrew_of_sdn
 
 (* Moon phases *)
 (* Borrowed from G.Satre of CNRS's program found at:
