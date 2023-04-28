@@ -452,15 +452,41 @@ let kind_to_string : type a. a kind -> string =
   | French -> "French"
   | Hebrew -> "Hebrew"
 
-let make kind ~day ~month ~year ~delta =
-  (* from wikipedia: "A year zero does not exist in the Anno Domini (AD) calendar year system commonly used to number years in the Gregorian calendar (nor in its predecessor, the Julian calendar)" *)
-  (* TODO year 0 in hebrew and french? *)
-  (* French: undefined if before 1er vendémiaire an I *)
-  (* Hebrew: ? *)
-  (* do we use year zero = 0 and negative date for BC here? *)
-  (* TODO should we fail on year = 0? *)
-  if day < 1 || month < 1 || month > 13 || day > 31 then
-    (* TODO more checks *)
+let make :
+    type a.
+    a kind ->
+    day:int ->
+    month:int ->
+    year:int ->
+    delta:int ->
+    (a date, string) result =
+ fun kind ~day ~month ~year ~delta ->
+  let gregorian_nb_days_upper_bound =
+    [| 31; 29; 31; 30; 31; 30; 31; 31; 30; 31; 30; 31 |]
+  in
+  let hebrew_nb_days_upper_bound =
+    (* last two are for Adar I and II;
+       Adar II should be 29, but we keep it simple and do not check for leap years *)
+    [| 30; 29; 30; 29; 30; 29; 30; 30; 30; 29; 30; 30; 30 |]
+  in
+  let is_invalid =
+    day < 1 || month < 1
+    ||
+    match kind with
+    | Gregorian | Julian ->
+        (* from wikipedia: "A year zero does not exist in the Anno Domini (AD) calendar year
+           system commonly used to number years in the Gregorian calendar (nor in its
+           predecessor, the Julian calendar)" *)
+        year = 0
+        || (match kind with
+           | Gregorian -> true
+           | Julian -> year > -46
+           | Hebrew | French -> (* . *) assert false)
+           && (month > 12 || gregorian_nb_days_upper_bound.(month - 1) < day)
+    | Hebrew -> month > 13 || hebrew_nb_days_upper_bound.(month - 1) < day
+    | French -> month > 12 || day > 30
+  in
+  if is_invalid then
     Error
       (Printf.sprintf "Invalid value: day=%d month=%d year=%d delta=%d kind=%s"
          day month year delta (kind_to_string kind))
