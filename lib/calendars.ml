@@ -469,28 +469,28 @@ let make :
        Adar II should be 29, but we keep it simple and do not check for leap years *)
     [| 30; 29; 30; 29; 30; 29; 30; 30; 30; 29; 30; 30; 30 |]
   in
-  let is_invalid =
-    day < 1 || month < 1
-    ||
-    match kind with
-    | Gregorian | Julian ->
-        (* from wikipedia: "A year zero does not exist in the Anno Domini (AD) calendar year
-           system commonly used to number years in the Gregorian calendar (nor in its
-           predecessor, the Julian calendar)" *)
-        year = 0
-        || (match kind with
-           | Gregorian -> true
-           | Julian -> year > -46
-           | Hebrew | French -> (* . *) assert false)
-           && (month > 12 || gregorian_nb_days_upper_bound.(month - 1) < day)
-    | Hebrew -> month > 13 || hebrew_nb_days_upper_bound.(month - 1) < day
-    | French -> month > 12 || day > 30
+  (* A year zero does not exist in the Anno Domini (AD) calendar year
+     system commonly used to number years in the Gregorian
+     and Julian calendar. *)
+  let check_greg () =
+    year <> 0 && month <= 12 && day <= gregorian_nb_days_upper_bound.(month - 1)
   in
-  if is_invalid then
+  let valid =
+    day > 0 && month > 0
+    &&
+    match kind with
+    | Gregorian -> check_greg ()
+    | Julian ->
+        (* Julian calendar was different before 45 BC *)
+        year < -45 || check_greg ()
+    | Hebrew -> month <= 13 && day <= hebrew_nb_days_upper_bound.(month - 1)
+    | French -> month <= 12 && day <= 30
+  in
+  if valid then Ok { day; month; year; delta; kind }
+  else
     Error
       (Printf.sprintf "Invalid value: day=%d month=%d year=%d delta=%d kind=%s"
          day month year delta (kind_to_string kind))
-  else Ok { day; month; year; delta; kind }
 
 let to_sdn : type a. a date -> sdn =
  fun date ->

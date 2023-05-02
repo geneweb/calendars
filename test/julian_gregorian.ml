@@ -17,8 +17,7 @@ let julian_feb_len year =
 
 let gregorian_feb_len year =
   let year = if year < 0 then year + 1 else year in
-  if year mod 4 = 0 && ((not (year mod 100 = 0)) || year mod 400 = 0) then 29
-  else 28
+  if year mod 4 = 0 && (year mod 100 <> 0 || year mod 400 = 0) then 29 else 28
 
 let month_len = [| 31; 28; 31; 30; 31; 30; 31; 31; 30; 31; 30; 31 |]
 
@@ -46,11 +45,8 @@ let test : type a. a kind -> (int -> a date) -> (int -> int) -> int -> test =
     (* year zero does not exists *)
     if year <> 0 then
       for month = 1 to 12 do
-        for
-          day = 1
-          to if month = 2 then feb_len year
-             else Array.get month_len @@ (month - 1)
-        do
+        let stop = if month = 2 then feb_len year else month_len.(month - 1) in
+        for day = 1 to stop do
           let d =
             match make kind ~day ~month ~year ~delta:0 with
             | Ok d -> d
