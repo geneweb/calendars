@@ -38,32 +38,50 @@ let kind_to_string : type a. a kind -> string =
 let test : type a. a kind -> (int -> a date) -> (int -> int) -> int -> test =
  fun kind of_sdn feb_len sdn_offset ->
   Printf.sprintf "%s <-> SDN" (kind_to_string kind) >:: fun _ ->
-  (* we start the loop on 1 january -4713 (SDN=0); but this does not correspond to the same SDN
-     for Julian and Gregorian this is why we have a +38 offset for Gregorian calendar *)
+  (* we start the loop on the first day of the Hebrew calendar
+     in the Julian calendar (day=7; month= 7; year=-3761);
+          but this does not correspond to the same SDN for Julian and Gregorian
+          this is why we have a +30 offset for Gregorian calendar *)
+  let buggy_hebrew_dates = ref 0 in
   let sdn = ref sdn_offset in
-  for year = -4713 to 10000 do
+  let year_start = -3761 in
+  for year = year_start to 10000 do
     (* year zero does not exists *)
     if year <> 0 then
-      for month = 1 to 12 do
+      let month_start = if year = year_start then 10 else 1 in
+      for month = month_start to 12 do
+        let day_start =
+          if year = year_start && month = month_start then 7 else 1
+        in
         let stop = if month = 2 then feb_len year else month_len.(month - 1) in
-        for day = 1 to stop do
-          let d =
-            match make kind ~day ~month ~year ~delta:0 with
-            | Ok d -> d
-            | Error s -> failwith s
-          in
+        for day = day_start to stop do
+          let d = Result.get_ok @@ make kind ~day ~month ~year ~delta:0 in
           let sdn' = to_sdn d in
           assert_equal_sdn !sdn sdn';
           assert_equal_dmy d (of_sdn sdn');
+          assert_equal_sdn !sdn (to_gregorian d |> to_sdn);
+          assert_equal_sdn !sdn (to_julian d |> to_sdn);
+          assert_equal_sdn !sdn (to_french d |> to_sdn);
+          (* TODO some date/sdn conversion are buggy in Hebrew;
+             (never more than +/- 2 SDN) *)
+          if !sdn <> (to_hebrew d |> to_sdn) then incr buggy_hebrew_dates;
           incr sdn
         done
       done
-  done
+  done;
+  Printf.eprintf "bad to_hebrew => to_sdn round trip: %d\n" !buggy_hebrew_dates
 
 let _ =
   run_test_tt_main
     ("test suite for Calendars"
     >::: [
-           test Julian julian_of_sdn julian_feb_len 0;
-           test Gregorian gregorian_of_sdn gregorian_feb_len 38;
+           (* It is probably irrelevant to test both Julian and Gregorian here... *)
+           test Julian
+             (fun sdn -> of_sdn Julian sdn |> Result.get_ok)
+             julian_feb_len
+             (sdn_hebrew_anno_mundi + 1);
+           test Gregorian
+             (fun sdn -> of_sdn Gregorian sdn |> Result.get_ok)
+             gregorian_feb_len
+             (sdn_hebrew_anno_mundi + 1 + 30);
          ])

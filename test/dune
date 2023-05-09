@@ -1,4 +1,4 @@
 (tests
- (names julian_gregorian)
+ (names test)
  (libraries ounit2 calendars)
- (modules julian_gregorian))
+ (modules test))

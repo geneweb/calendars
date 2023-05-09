@@ -170,7 +170,7 @@ let halakim_per_hour = 1080
 let halakim_per_day = 25920
 let halakim_per_lunar_cycle = (29 * halakim_per_day) + 13753
 let halakim_per_metonic_cycle = halakim_per_lunar_cycle * ((12 * 19) + 7)
-let sdn_offset = 347997
+let sdn_hebrew_anno_mundi = 347997
 let new_moon_of_creation = 31524
 let sunday = 0
 let monday = 1
@@ -320,7 +320,7 @@ let sdn_of_hebrew d =
         | 13 -> tishri1After + d.day - 30
         | _ -> invalid_arg "sdn_of_hebrew")
   in
-  sdn + sdn_offset
+  sdn + sdn_hebrew_anno_mundi
 
 let findTishriMolad inputDay =
   let metonicCycle = (inputDay + 310) / 6940 in
@@ -364,9 +364,9 @@ let glop inputDay tishri1 tishri1After =
   else (3, day - 29)
 
 let hebrew_of_sdn sdn =
-  let inputDay = sdn - sdn_offset in
+  let inputDay = sdn - sdn_hebrew_anno_mundi in
   let year, month, day =
-    if inputDay <= 0 then (0, 0, 0)
+    if inputDay <= 0 then (0, 0, 0) (* should raise invalid arg here instead *)
     else
       let metonicCycle, metonicYear, day, halakim = findTishriMolad inputDay in
       let init_day = day in
@@ -443,86 +443,6 @@ let hebrew_of_sdn sdn =
                 (year, month, day)
   in
   { day; month; year; delta = 0; kind = Hebrew }
-
-let kind_to_string : type a. a kind -> string =
- fun kind ->
-  match kind with
-  | Gregorian -> "Gregorian"
-  | Julian -> "Julian"
-  | French -> "French"
-  | Hebrew -> "Hebrew"
-
-let make :
-    type a.
-    a kind ->
-    day:int ->
-    month:int ->
-    year:int ->
-    delta:int ->
-    (a date, string) result =
- fun kind ~day ~month ~year ~delta ->
-  let gregorian_nb_days_upper_bound =
-    [| 31; 29; 31; 30; 31; 30; 31; 31; 30; 31; 30; 31 |]
-  in
-  let hebrew_nb_days_upper_bound =
-    (* last two are for Adar I and II;
-       Adar II should be 29, but we keep it simple and do not check for leap years *)
-    [| 30; 29; 30; 29; 30; 29; 30; 30; 30; 29; 30; 30; 30 |]
-  in
-  (* A year zero does not exist in the Anno Domini (AD) calendar year
-     system commonly used to number years in the Gregorian
-     and Julian calendar. *)
-  let check_greg () =
-    year <> 0 && month <= 12 && day <= gregorian_nb_days_upper_bound.(month - 1)
-  in
-  let valid =
-    day > 0 && month > 0
-    &&
-    match kind with
-    | Gregorian -> check_greg ()
-    | Julian ->
-        (* Julian calendar was different before 45 BC *)
-        year < -45 || check_greg ()
-    | Hebrew -> month <= 13 && day <= hebrew_nb_days_upper_bound.(month - 1)
-    | French -> month <= 12 && day <= 30
-  in
-  if valid then Ok { day; month; year; delta; kind }
-  else
-    Error
-      (Printf.sprintf "Invalid value: day=%d month=%d year=%d delta=%d kind=%s"
-         day month year delta (kind_to_string kind))
-
-let to_sdn : type a. a date -> sdn =
- fun date ->
-  match date.kind with
-  | Gregorian -> sdn_of_gregorian date
-  | Julian -> sdn_of_julian date
-  | French -> sdn_of_french date
-  | Hebrew -> sdn_of_hebrew date
-
-let to_gregorian : type a. a date -> gregorian date =
- fun date ->
-  match date.kind with
-  | Gregorian -> date
-  | Julian | French | Hebrew -> to_sdn date |> gregorian_of_sdn
-
-let to_julian : type a. a date -> julian date =
- fun date ->
-  match date.kind with
-  | Julian -> date
-  | Gregorian | French | Hebrew -> to_sdn date |> julian_of_sdn
-
-let to_french : type a. a date -> french date =
- fun date ->
-  match date.kind with
-  | French -> date
-  | Gregorian | Julian | Hebrew -> to_sdn date |> french_of_sdn
-
-let to_hebrew : type a. a date -> hebrew date =
- fun date ->
-  match date.kind with
-  | Hebrew -> date
-  | Gregorian | Julian | French -> to_sdn date |> hebrew_of_sdn
 
 (* Moon phases *)
 (* Borrowed from G.Satre of CNRS's program found at:
@@ -753,3 +673,97 @@ let moon_phase_of_sdn jd =
   let date = gregorian_of_sdn jd in
   if date.year < -4000 || date.year > 2500 then failwith "moon_phase_of_sdn"
   else moon_phase_of_gregorian date
+
+let kind_to_string : type a. a kind -> string =
+ fun kind ->
+  match kind with
+  | Gregorian -> "Gregorian"
+  | Julian -> "Julian"
+  | French -> "French"
+  | Hebrew -> "Hebrew"
+
+let make :
+    type a.
+    a kind ->
+    day:int ->
+    month:int ->
+    year:int ->
+    delta:int ->
+    (a date, string) result =
+ fun kind ~day ~month ~year ~delta ->
+  let gregorian_nb_days_upper_bound =
+    [| 31; 29; 31; 30; 31; 30; 31; 31; 30; 31; 30; 31 |]
+  in
+  let hebrew_nb_days_upper_bound =
+    (* last two are for Adar I and II;
+       Adar II should be 29, but we keep it simple and do not check for leap years *)
+    [| 30; 29; 30; 29; 30; 29; 30; 30; 30; 29; 30; 30; 30 |]
+  in
+  (* A year zero does not exist in the Anno Domini (AD) calendar year
+     system commonly used to number years in the Gregorian
+     and Julian calendar. *)
+  let check_greg =
+    year <> 0 && month <= 12 && day <= gregorian_nb_days_upper_bound.(month - 1)
+  in
+  let valid =
+    day > 0 && month > 0
+    &&
+    match kind with
+    | Gregorian -> check_greg
+    | Julian ->
+        (* Julian calendar was different before 45 BC *)
+        year < -45 || check_greg
+    | Hebrew -> month <= 13 && day <= hebrew_nb_days_upper_bound.(month - 1)
+    | French -> month <= 12 && day <= 30
+  in
+  if valid then Ok { day; month; year; delta; kind }
+  else
+    Error
+      (Printf.sprintf "Invalid value: day=%d month=%d year=%d delta=%d kind=%s"
+         day month year delta (kind_to_string kind))
+
+let of_sdn : type a. a kind -> sdn -> (a date, string) result =
+ fun kind sdn ->
+  if sdn <= sdn_hebrew_anno_mundi then
+    Error
+      (Printf.sprintf "SDN %d is before SDN %d (start of the world)!" sdn
+         sdn_hebrew_anno_mundi)
+  else
+    Ok
+      (match kind with
+      | Gregorian -> gregorian_of_sdn sdn
+      | Julian -> julian_of_sdn sdn
+      | French -> french_of_sdn sdn
+      | Hebrew -> hebrew_of_sdn sdn)
+
+let to_sdn : type a. a date -> sdn =
+ fun date ->
+  match date.kind with
+  | Gregorian -> sdn_of_gregorian date
+  | Julian -> sdn_of_julian date
+  | French -> sdn_of_french date
+  | Hebrew -> sdn_of_hebrew date
+
+let to_gregorian : type a. a date -> gregorian date =
+ fun date ->
+  match date.kind with
+  | Gregorian -> date
+  | Julian | French | Hebrew -> to_sdn date |> gregorian_of_sdn
+
+let to_julian : type a. a date -> julian date =
+ fun date ->
+  match date.kind with
+  | Julian -> date
+  | Gregorian | French | Hebrew -> to_sdn date |> julian_of_sdn
+
+let to_french : type a. a date -> french date =
+ fun date ->
+  match date.kind with
+  | French -> date
+  | Gregorian | Julian | Hebrew -> to_sdn date |> french_of_sdn
+
+let to_hebrew : type a. a date -> hebrew date =
+ fun date ->
+  match date.kind with
+  | Hebrew -> date
+  | Gregorian | Julian | French -> to_sdn date |> hebrew_of_sdn
