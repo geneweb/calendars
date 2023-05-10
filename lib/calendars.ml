@@ -682,6 +682,14 @@ let kind_to_string : type a. a kind -> string =
   | French -> "French"
   | Hebrew -> "Hebrew"
 
+let to_sdn : type a. a date -> sdn =
+ fun date ->
+  match date.kind with
+  | Gregorian -> sdn_of_gregorian date
+  | Julian -> sdn_of_julian date
+  | French -> sdn_of_french date
+  | Hebrew -> sdn_of_hebrew date
+
 let make :
     type a.
     a kind ->
@@ -716,7 +724,15 @@ let make :
     | Hebrew -> month <= 13 && day <= hebrew_nb_days_upper_bound.(month - 1)
     | French -> month <= 12 && day <= 30
   in
-  if valid then Ok { day; month; year; delta; kind }
+  if valid then
+    let d = { day; month; year; delta; kind } in
+    if to_sdn d <= sdn_hebrew_anno_mundi then
+      Error
+        (Printf.sprintf
+           "Invalid value; this date is before the range of suported dates: \
+            day=%d month=%d year=%d delta=%d kind=%s"
+           day month year delta (kind_to_string kind))
+    else Ok d
   else
     Error
       (Printf.sprintf "Invalid value: day=%d month=%d year=%d delta=%d kind=%s"
@@ -735,14 +751,6 @@ let of_sdn : type a. a kind -> sdn -> (a date, string) result =
       | Julian -> julian_of_sdn sdn
       | French -> french_of_sdn sdn
       | Hebrew -> hebrew_of_sdn sdn)
-
-let to_sdn : type a. a date -> sdn =
- fun date ->
-  match date.kind with
-  | Gregorian -> sdn_of_gregorian date
-  | Julian -> sdn_of_julian date
-  | French -> sdn_of_french date
-  | Hebrew -> sdn_of_hebrew date
 
 let to_gregorian : type a. a date -> gregorian date =
  fun date ->
