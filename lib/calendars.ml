@@ -484,7 +484,7 @@ let make :
         (* Julian calendar was different before 45 BC *)
         year < -45 || check_greg ()
     | Hebrew -> month <= 13 && day <= hebrew_nb_days_upper_bound.(month - 1)
-    | French -> month <= 12 && day <= 30
+    | French -> month <= 13 && day <= 30
   in
   if valid then Ok { day; month; year; delta; kind }
   else
