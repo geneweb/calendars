@@ -10,12 +10,18 @@ type _ kind =
   | Hebrew : hebrew kind
 
 module Unsafe : sig
-  type 'a date
+  type 'a date = private {
+    day : int;
+    month : int;
+    year : int;
+    delta : int;
+    kind : 'a kind;
+  }
 
   val to_string : 'a date -> string
 end
 
-type 'a date = private {
+type 'a date = 'a Unsafe.date = private {
   day : int;
   month : int;
   year : int;

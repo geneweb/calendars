@@ -1,8 +1,24 @@
 let () =
+  let make ~day ~month ~year kind =
+    Result.fold ~ok:Fun.id
+      ~error:(fun erroneous_date -> erroneous_date.Calendars.value)
+      (Calendars.make ~day ~month ~year ~delta:0 kind)
+  in
   Js_of_ocaml.Js.export "Calendars"
     begin
       object%js
-        method make day month year = { Calendars.day; month; year; delta = 0 }
+        method makeGregorian day month year =
+          make ~day ~month ~year Calendars.Gregorian
+
+        method makeJulian day month year =
+          make ~day ~month ~year Calendars.Julian
+
+        method makeFrench day month year =
+          make ~day ~month ~year Calendars.French
+
+        method makeHebrew day month year =
+          make ~day ~month ~year Calendars.Hebrew
+
         method day { Calendars.day; _ } = day
         method month { Calendars.month; _ } = month
         method year { Calendars.year; _ } = year
@@ -11,16 +27,7 @@ let () =
         method julianOfSdn = Calendars.julian_of_sdn
         method frenchOfSdn = Calendars.french_of_sdn
         method hebrewOfSdn = Calendars.hebrew_of_sdn
-        method sdnOfGregorian = Calendars.sdn_of_gregorian
-        method sdnOfJulian = Calendars.sdn_of_julian
-        method sdnOfFrench = Calendars.sdn_of_french
-        method sdnOfHebrew = Calendars.sdn_of_hebrew
-        method gregorianOfJulian = Calendars.gregorian_of_julian
-        method julianOfGregorian = Calendars.julian_of_gregorian
-        method gregorianOfFrench = Calendars.gregorian_of_french
-        method frenchOfGregorian = Calendars.french_of_gregorian
-        method gregorianOfHebrew = Calendars.gregorian_of_hebrew
-        method hebrewOfGregorian = Calendars.hebrew_of_gregorian
+        method toSdn = Calendars.to_sdn
 
         method moonPhaseOfSdn s =
           match Calendars.moon_phase_of_sdn s with
