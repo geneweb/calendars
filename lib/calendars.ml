@@ -452,6 +452,10 @@ let kind_to_string : type a. a kind -> string =
   | French -> "French"
   | Hebrew -> "Hebrew"
 
+module Unsafe = struct
+  let make kind ~day ~month ~year ~delta = { day; month; year; delta; kind }
+end
+
 let make :
     type a.
     a kind ->
@@ -486,7 +490,7 @@ let make :
     | Hebrew -> month <= 13 && day <= hebrew_nb_days_upper_bound.(month - 1)
     | French -> month <= 13 && day <= 30
   in
-  if valid then Ok { day; month; year; delta; kind }
+  if valid then Ok (Unsafe.make ~day ~month ~year ~delta kind)
   else
     Error
       (Printf.sprintf "Invalid value: day=%d month=%d year=%d delta=%d kind=%s"

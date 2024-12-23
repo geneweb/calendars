@@ -40,3 +40,7 @@ val to_hebrew : 'a date -> hebrew date
 type moon_phase = NewMoon | FirstQuarter | FullMoon | LastQuarter
 
 val moon_phase_of_sdn : sdn -> (moon_phase * int * int) option * int
+
+module Unsafe : sig
+  val make : 'a kind -> day:int -> month:int -> year:int -> delta:sdn -> 'a date
+end
