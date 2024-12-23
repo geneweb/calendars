@@ -6,7 +6,6 @@ let _ =
   Js.export "Calendars" begin object%js
 
     method make day month year = { day ; month ; year ; delta = 0 }
-    (* method make_withDelta day month year delta = { day ; month ; year ; delta } *)
     method day { day ; _ } = day
     method month { month ; _ } = month
     method year { year : _ } = year
