@@ -25,8 +25,9 @@ val make :
   month:int ->
   year:int ->
   delta:sdn ->
-  ('a date, string) result
+  ('a date, [ `Invalid_day | `Invalid_month | `Invalid_year ]) result
 
+val to_string : 'a date -> string
 val gregorian_of_sdn : sdn -> gregorian date
 val julian_of_sdn : sdn -> julian date
 val french_of_sdn : sdn -> french date

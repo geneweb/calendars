@@ -50,7 +50,15 @@ let test : type a. a kind -> (int -> a date) -> (int -> int) -> int -> test =
           let d =
             match make kind ~day ~month ~year ~delta:0 with
             | Ok d -> d
-            | Error s -> failwith s
+            | Error error_kind ->
+                failwith
+                  (Printf.sprintf "Invalid %s: %s"
+                     (match error_kind with
+                     | `Invalid_day -> "day"
+                     | `Invalid_month -> "month"
+                     | `Invalid_year -> "year")
+                     (Calendars.to_string
+                     @@ Calendars.Unsafe.make kind ~day ~month ~year ~delta:0))
           in
           let sdn' = to_sdn d in
           assert_equal_sdn !sdn sdn';
