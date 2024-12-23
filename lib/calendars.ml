@@ -15,6 +15,14 @@ type _ kind =
   | French : french kind
   | Hebrew : hebrew kind
 
+let kind_to_string : type a. a kind -> string =
+ fun kind ->
+  match kind with
+  | Gregorian -> "Gregorian"
+  | Julian -> "Julian"
+  | French -> "French"
+  | Hebrew -> "Hebrew"
+
 type 'a date = {
   day : int;
   month : int;
@@ -443,14 +451,6 @@ let hebrew_of_sdn sdn =
                 (year, month, day)
   in
   { day; month; year; delta = 0; kind = Hebrew }
-
-let kind_to_string : type a. a kind -> string =
- fun kind ->
-  match kind with
-  | Gregorian -> "Gregorian"
-  | Julian -> "Julian"
-  | French -> "French"
-  | Hebrew -> "Hebrew"
 
 let make :
     type a.
