@@ -1,4 +1,4 @@
-let _ =
+let () =
 
   Js_of_ocaml.Js.export "Calendars" begin object%js
 
