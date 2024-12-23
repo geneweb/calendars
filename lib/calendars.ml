@@ -31,6 +31,10 @@ module Unsafe = struct
     delta : int;
     kind : 'a kind;
   }
+
+  let to_string { day; month; year; delta; kind } =
+    Printf.sprintf "{day = %d; month = %d; year = %d; delta = %d; kind = %s" day
+      month year delta (kind_to_string kind)
 end
 
 type 'a date = 'a Unsafe.date = {
@@ -462,6 +466,9 @@ let hebrew_of_sdn sdn =
   in
   { day; month; year; delta = 0; kind = Hebrew }
 
+type erroneous_date_kind = Invalid_day | Invalid_month | Invalid_year
+type 'a erroneous_date = { kind : erroneous_date_kind; value : 'a Unsafe.date }
+
 let make :
     type a.
     a kind ->
@@ -469,7 +476,7 @@ let make :
     month:int ->
     year:int ->
     delta:int ->
-    (a date, string) result =
+    (a date, a erroneous_date) result =
  fun kind ~day ~month ~year ~delta ->
   let gregorian_nb_days_upper_bound =
     [| 31; 29; 31; 30; 31; 30; 31; 31; 30; 31; 30; 31 |]
@@ -482,25 +489,40 @@ let make :
   (* A year zero does not exist in the Anno Domini (AD) calendar year
      system commonly used to number years in the Gregorian
      and Julian calendar. *)
+  let check_day, check_month, check_year =
+    let check ~error_kind is_ok =
+      if is_ok () then Ok ()
+      else
+        Error { kind = error_kind; value = { day; month; year; delta; kind } }
+    in
+    ( check ~error_kind:Invalid_day,
+      check ~error_kind:Invalid_month,
+      check ~error_kind:Invalid_year )
+  in
+  let ( >>= ) = Result.bind in
   let check_greg () =
-    year <> 0 && month <= 12 && day <= gregorian_nb_days_upper_bound.(month - 1)
+    check_year (fun () -> year <> 0) >>= fun () ->
+    check_month (fun () -> month <= 12) >>= fun () ->
+    check_day (fun () -> day <= gregorian_nb_days_upper_bound.(month - 1))
   in
   let valid =
-    day > 0 && month > 0
-    &&
+    check_day (fun () -> day > 0) >>= fun () ->
+    check_month (fun () -> month > 0) >>= fun () ->
     match kind with
     | Gregorian -> check_greg ()
     | Julian ->
         (* Julian calendar was different before 45 BC *)
-        year < -45 || check_greg ()
-    | Hebrew -> month <= 13 && day <= hebrew_nb_days_upper_bound.(month - 1)
-    | French -> month <= 13 && day <= 30
+        Result.fold ~ok:Result.ok
+          ~error:(Fun.const @@ check_greg ())
+          (check_year (fun () -> year < -45))
+    | Hebrew ->
+        check_month (fun () -> month <= 13) >>= fun () ->
+        check_day (fun () -> day <= hebrew_nb_days_upper_bound.(month - 1))
+    | French ->
+        check_month (fun () -> month <= 13) >>= fun () ->
+        check_day (fun () -> day <= 30)
   in
-  if valid then Ok { day; month; year; delta; kind }
-  else
-    Error
-      (Printf.sprintf "Invalid value: day=%d month=%d year=%d delta=%d kind=%s"
-         day month year delta (kind_to_string kind))
+  Result.map (fun () -> { day; month; year; delta; kind }) valid
 
 let to_sdn : type a. a date -> sdn =
  fun date ->

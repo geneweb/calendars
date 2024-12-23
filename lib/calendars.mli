@@ -9,6 +9,12 @@ type _ kind =
   | French : french kind
   | Hebrew : hebrew kind
 
+module Unsafe : sig
+  type 'a date
+
+  val to_string : 'a date -> string
+end
+
 type 'a date = private {
   day : int;
   month : int;
@@ -18,6 +24,8 @@ type 'a date = private {
 }
 
 type sdn = int
+type erroneous_date_kind = Invalid_day | Invalid_month | Invalid_year
+type 'a erroneous_date = { kind : erroneous_date_kind; value : 'a Unsafe.date }
 
 val make :
   'a kind ->
@@ -25,7 +33,7 @@ val make :
   month:int ->
   year:int ->
   delta:sdn ->
-  ('a date, string) result
+  ('a date, 'a erroneous_date) result
 
 val gregorian_of_sdn : sdn -> gregorian date
 val julian_of_sdn : sdn -> julian date
