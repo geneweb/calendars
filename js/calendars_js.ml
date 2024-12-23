@@ -1,50 +1,47 @@
-open Js_of_ocaml
-open Calendars
-
 let _ =
 
-  Js.export "Calendars" begin object%js
+  Js_of_ocaml.Js.export "Calendars" begin object%js
 
-    method make day month year = { day ; month ; year ; delta = 0 }
-    method day { day ; _ } = day
-    method month { month ; _ } = month
-    method year { year : _ } = year
-    method delta { delta : _ } = delta
+    method make day month year = { Calendars.day ; month ; year ; delta = 0 }
+    method day { Calendars.day ; _ } = day
+    method month { Calendars.month ; _ } = month
+    method year { Calendars.year : _ } = year
+    method delta { Calendars.delta : _ } = delta
 
-    method gregorianOfSdn = gregorian_of_sdn
-    method julianOfSdn = julian_of_sdn
-    method frenchOfSdn = french_of_sdn
-    method hebrewOfSdn = hebrew_of_sdn
+    method gregorianOfSdn = Calendars.gregorian_of_sdn
+    method julianOfSdn = Calendars.julian_of_sdn
+    method frenchOfSdn = Calendars.french_of_sdn
+    method hebrewOfSdn = Calendars.hebrew_of_sdn
 
-    method sdnOfGregorian = sdn_of_gregorian
-    method sdnOfJulian = sdn_of_julian
-    method sdnOfFrench = sdn_of_french
-    method sdnOfHebrew = sdn_of_hebrew
+    method sdnOfGregorian = Calendars.sdn_of_gregorian
+    method sdnOfJulian = Calendars.sdn_of_julian
+    method sdnOfFrench = Calendars.sdn_of_french
+    method sdnOfHebrew = Calendars.sdn_of_hebrew
 
-    method gregorianOfJulian = gregorian_of_julian
-    method julianOfGregorian = julian_of_gregorian
-    method gregorianOfFrench = gregorian_of_french
-    method frenchOfGregorian = french_of_gregorian
-    method gregorianOfHebrew = gregorian_of_hebrew
-    method hebrewOfGregorian = hebrew_of_gregorian
+    method gregorianOfJulian = Calendars.gregorian_of_julian
+    method julianOfGregorian = Calendars.julian_of_gregorian
+    method gregorianOfFrench = Calendars.gregorian_of_french
+    method frenchOfGregorian = Calendars.french_of_gregorian
+    method gregorianOfHebrew = Calendars.gregorian_of_hebrew
+    method hebrewOfGregorian = Calendars.hebrew_of_gregorian
 
     method moonPhaseOfSdn s =
-      match moon_phase_of_sdn s with
+      match Calendars.moon_phase_of_sdn s with
       | None, moon_age ->
-        Js.Unsafe.obj [| "phase", Js.Unsafe.inject Js.null
-                       ; "age", Js.Unsafe.inject moon_age |]
+        Js_of_ocaml.Js.Unsafe.obj [| "phase", Js_of_ocaml.Js.Unsafe.inject Js_of_ocaml.Js.null
+                       ; "age", Js_of_ocaml.Js.Unsafe.inject moon_age |]
       | Some (mp, hh, mm), moon_age ->
         let mp = match mp with
-          | NewMoon -> Js.string "NewMoon"
-          | FirstQuarter -> Js.string "FirstQuarter"
-          | FullMoon -> Js.string "FullMoon"
-          | LastQuarter -> Js.string "LastQuarter"
+          | NewMoon -> Js_of_ocaml.Js.string "NewMoon"
+          | FirstQuarter -> Js_of_ocaml.Js.string "FirstQuarter"
+          | FullMoon -> Js_of_ocaml.Js.string "FullMoon"
+          | LastQuarter -> Js_of_ocaml.Js.string "LastQuarter"
         in
-        Js.Unsafe.obj
-          [| "phase", Js.Unsafe.inject mp
-           ; "hour", Js.Unsafe.inject hh
-           ; "minute", Js.Unsafe.inject mm
-           ; "age", Js.Unsafe.inject moon_age
+        Js_of_ocaml.Js.Unsafe.obj
+          [| "phase", Js_of_ocaml.Js.Unsafe.inject mp
+           ; "hour", Js_of_ocaml.Js.Unsafe.inject hh
+           ; "minute", Js_of_ocaml.Js.Unsafe.inject mm
+           ; "age", Js_of_ocaml.Js.Unsafe.inject moon_age
           |]
 
   end end
