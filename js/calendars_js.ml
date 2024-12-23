@@ -5,8 +5,8 @@ let _ =
     method make day month year = { Calendars.day ; month ; year ; delta = 0 }
     method day { Calendars.day ; _ } = day
     method month { Calendars.month ; _ } = month
-    method year { Calendars.year : _ } = year
-    method delta { Calendars.delta : _ } = delta
+    method year { Calendars.year ; _ } = year
+    method delta { Calendars.delta ; _ } = delta
 
     method gregorianOfSdn = Calendars.gregorian_of_sdn
     method julianOfSdn = Calendars.julian_of_sdn
