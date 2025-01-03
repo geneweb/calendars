@@ -484,9 +484,6 @@ let make : type a.
        Adar II should be 29, but we keep it simple and do not check for leap years *)
     [| 30; 29; 30; 29; 30; 29; 30; 30; 30; 29; 30; 30; 30 |]
   in
-  (* A year zero does not exist in the Anno Domini (AD) calendar year
-     system commonly used to number years in the Gregorian
-     and Julian calendar. *)
   let check_day, check_month, check_year =
     let check ~error_kind is_ok = if is_ok then Ok () else Error error_kind in
     ( check ~error_kind:`Invalid_day,
@@ -495,6 +492,9 @@ let make : type a.
   in
   let open Syntax in
   let check_greg =
+    (* A year zero does not exist in the Anno Domini (AD) calendar year
+     system commonly used to number years in the Gregorian
+     and Julian calendar. *)
     let* _y = check_year (year <> 0) in
     let* _m = check_month (month <= 12) in
     check_day (day <= gregorian_nb_days_upper_bound.(month - 1))
