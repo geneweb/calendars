@@ -494,7 +494,7 @@ let make : type a.
       check ~error_kind:`Invalid_year )
   in
   let open Syntax in
-  let check_greg () =
+  let check_greg =
     let* _y = check_year (year <> 0) in
     let* _m = check_month (month <= 12) in
     check_day (day <= gregorian_nb_days_upper_bound.(month - 1))
@@ -503,10 +503,10 @@ let make : type a.
     let* _d = check_day (day > 0) in
     let* _m = check_month (month > 0) in
     match kind with
-    | Gregorian -> check_greg ()
+    | Gregorian -> check_greg
     | Julian ->
         (* Julian calendar was different before 45 BC *)
-        check_year (year < -45 || Result.is_ok (check_greg ()))
+        check_year (year < -45 || Result.is_ok check_greg)
     | Hebrew ->
         let* _m = check_month (month <= 13) in
         check_day (day <= hebrew_nb_days_upper_bound.(month - 1))
