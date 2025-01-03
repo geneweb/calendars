@@ -468,6 +468,20 @@ module Unsafe = struct
   let make kind ~day ~month ~year ~delta = { day; month; year; delta; kind }
 end
 
+let gregorian_nb_days_upper_bound =
+  [| 31; 29; 31; 30; 31; 30; 31; 31; 30; 31; 30; 31 |]
+
+let hebrew_nb_days_upper_bound =
+  (* last two are for Adar I and II;
+       Adar II should be 29, but we keep it simple and do not check for leap years *)
+  [| 30; 29; 30; 29; 30; 29; 30; 30; 30; 29; 30; 30; 30 |]
+
+let check_day, check_month, check_year =
+  let check ~error_kind is_ok = if is_ok then Ok () else Error error_kind in
+  ( check ~error_kind:`Invalid_day,
+    check ~error_kind:`Invalid_month,
+    check ~error_kind:`Invalid_year )
+
 let make : type a.
     a kind ->
     day:int ->
@@ -476,20 +490,6 @@ let make : type a.
     delta:int ->
     (a date, [ `Invalid_day | `Invalid_month | `Invalid_year ]) result =
  fun kind ~day ~month ~year ~delta ->
-  let gregorian_nb_days_upper_bound =
-    [| 31; 29; 31; 30; 31; 30; 31; 31; 30; 31; 30; 31 |]
-  in
-  let hebrew_nb_days_upper_bound =
-    (* last two are for Adar I and II;
-       Adar II should be 29, but we keep it simple and do not check for leap years *)
-    [| 30; 29; 30; 29; 30; 29; 30; 30; 30; 29; 30; 30; 30 |]
-  in
-  let check_day, check_month, check_year =
-    let check ~error_kind is_ok = if is_ok then Ok () else Error error_kind in
-    ( check ~error_kind:`Invalid_day,
-      check ~error_kind:`Invalid_month,
-      check ~error_kind:`Invalid_year )
-  in
   let open Syntax in
   let check_greg =
     (* A year zero does not exist in the Anno Domini (AD) calendar year
