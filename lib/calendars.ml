@@ -488,33 +488,31 @@ let make : type a.
      system commonly used to number years in the Gregorian
      and Julian calendar. *)
   let check_day, check_month, check_year =
-    let check ~error_kind is_ok =
-      if is_ok () then Ok () else Error error_kind
-    in
+    let check ~error_kind is_ok = if is_ok then Ok () else Error error_kind in
     ( check ~error_kind:`Invalid_day,
       check ~error_kind:`Invalid_month,
       check ~error_kind:`Invalid_year )
   in
   let open Syntax in
   let check_greg () =
-    let* _y = check_year (fun () -> year <> 0) in
-    let* _m = check_month (fun () -> month <= 12) in
-    check_day (fun () -> day <= gregorian_nb_days_upper_bound.(month - 1))
+    let* _y = check_year (year <> 0) in
+    let* _m = check_month (month <= 12) in
+    check_day (day <= gregorian_nb_days_upper_bound.(month - 1))
   in
   let+ valid =
-    let* _d = check_day (fun () -> day > 0) in
-    let* _m = check_month (fun () -> month > 0) in
+    let* _d = check_day (day > 0) in
+    let* _m = check_month (month > 0) in
     match kind with
     | Gregorian -> check_greg ()
     | Julian ->
         (* Julian calendar was different before 45 BC *)
-        check_year (fun () -> year < -45 || Result.is_ok (check_greg ()))
+        check_year (year < -45 || Result.is_ok (check_greg ()))
     | Hebrew ->
-        let* _m = check_month (fun () -> month <= 13) in
-        check_day (fun () -> day <= hebrew_nb_days_upper_bound.(month - 1))
+        let* _m = check_month (month <= 13) in
+        check_day (day <= hebrew_nb_days_upper_bound.(month - 1))
     | French ->
-        let* _m = check_month (fun () -> month <= 13) in
-        check_day (fun () -> day <= 30)
+        let* _m = check_month (month <= 13) in
+        check_day (day <= 30)
   in
   Unsafe.make ~day ~month ~year ~delta kind
 
