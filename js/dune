@@ -1,7 +1,7 @@
 (executable
-  (name calendars_js)
-  (modes js)
-  (preprocess (pps js_of_ocaml-ppx))
-  (libraries calendars)
-  (modules calendars_js)
-)
+ (name calendars_js)
+ (modes js)
+ (preprocess
+  (pps js_of_ocaml-ppx))
+ (libraries calendars)
+ (modules calendars_js))

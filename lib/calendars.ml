@@ -460,8 +460,7 @@ module Unsafe = struct
   let make kind ~day ~month ~year ~delta = { day; month; year; delta; kind }
 end
 
-let make :
-    type a.
+let make : type a.
     a kind ->
     day:int ->
     month:int ->
