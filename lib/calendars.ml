@@ -23,7 +23,17 @@ let kind_to_string : type a. a kind -> string =
   | French -> "French"
   | Hebrew -> "Hebrew"
 
-type 'a date = {
+module Unsafe = struct
+  type 'a date = {
+    day : int;
+    month : int;
+    year : int;
+    delta : int;
+    kind : 'a kind;
+  }
+end
+
+type 'a date = 'a Unsafe.date = {
   day : int;
   month : int;
   year : int;
