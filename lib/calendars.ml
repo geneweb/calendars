@@ -25,6 +25,14 @@ type 'a date = {
 
 type sdn = int
 
+module Syntax = struct
+  (* bind *)
+  let ( let* ) o f = match o with Ok v -> f v | Error _ as e -> e
+
+  (* map *)
+  let ( let+ ) o f = match o with Ok v -> Ok (f v) | Error _ as e -> e
+end
+
 let mydiv x y = if x >= 0 then x / y else (x - y + 1) / y
 let mymod x y = if x >= 0 then x mod y else ((x + 1) mod y) + y - 1
 
@@ -487,28 +495,28 @@ let make : type a.
       check ~error_kind:`Invalid_month,
       check ~error_kind:`Invalid_year )
   in
-  let ( >>= ) = Result.bind in
+  let open Syntax in
   let check_greg () =
-    check_year (fun () -> year <> 0) >>= fun () ->
-    check_month (fun () -> month <= 12) >>= fun () ->
+    let* _y = check_year (fun () -> year <> 0) in
+    let* _m = check_month (fun () -> month <= 12) in
     check_day (fun () -> day <= gregorian_nb_days_upper_bound.(month - 1))
   in
-  let valid =
-    check_day (fun () -> day > 0) >>= fun () ->
-    check_month (fun () -> month > 0) >>= fun () ->
+  let+ valid =
+    let* _d = check_day (fun () -> day > 0) in
+    let* _m = check_month (fun () -> month > 0) in
     match kind with
     | Gregorian -> check_greg ()
     | Julian ->
         (* Julian calendar was different before 45 BC *)
         check_year (fun () -> year < -45 || Result.is_ok (check_greg ()))
     | Hebrew ->
-        check_month (fun () -> month <= 13) >>= fun () ->
+        let* _m = check_month (fun () -> month <= 13) in
         check_day (fun () -> day <= hebrew_nb_days_upper_bound.(month - 1))
     | French ->
-        check_month (fun () -> month <= 13) >>= fun () ->
+        let* _m = check_month (fun () -> month <= 13) in
         check_day (fun () -> day <= 30)
   in
-  Result.map (fun () -> Unsafe.make ~day ~month ~year ~delta kind) valid
+  Unsafe.make ~day ~month ~year ~delta kind
 
 let to_sdn : type a. a date -> sdn =
  fun date ->
