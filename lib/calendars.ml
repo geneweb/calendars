@@ -129,6 +129,7 @@ let modulo360 pAngle =
   if angle < 0.0 then angle +. 360.0 else angle
 
 let equinoxeAutomne pAnnee =
+  let pAnnee = if pAnnee < 0 then pAnnee + 1 else pAnnee in
   let f = 12.0 in
   let q = 30.0 in
   let i = 0 in
