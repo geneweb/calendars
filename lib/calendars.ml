@@ -4,16 +4,22 @@
 (* Changed gregorian and julian to work always with negative years
    (Scott's version worked only for years > -4800 *)
 
+(* The conversion functions for the Islamic calendar have been manually
+   translated from their JavaScript version implemented for the online
+   converter https://www.fourmilab.ch/documents/calendar/. *)
+
 type gregorian
 type julian
 type french
 type hebrew
+type islamic
 
 type _ kind =
   | Gregorian : gregorian kind
   | Julian : julian kind
   | French : french kind
   | Hebrew : hebrew kind
+  | Islamic : islamic kind
 
 let kind_to_string : type a. a kind -> string =
  fun kind ->
@@ -22,6 +28,7 @@ let kind_to_string : type a. a kind -> string =
   | Julian -> "Julian"
   | French -> "French"
   | Hebrew -> "Hebrew"
+  | Islamic -> "Islamic"
 
 module Unsafe = struct
   type 'a date = {
@@ -345,6 +352,15 @@ let sdn_of_hebrew d =
   in
   sdn + sdn_offset
 
+let islamic_sdn_offset = 1_948_440
+
+let sdn_of_islamic d =
+  d.day
+  + Float.to_int (ceil (29.5 *. float (d.month - 1)))
+  + ((d.year - 1) * 354)
+  + Float.to_int (floor (float (3 + (11 * d.year)) /. 30.))
+  + islamic_sdn_offset - 1
+
 let findTishriMolad inputDay =
   let metonicCycle = (inputDay + 310) / 6940 in
   let moladDay, moladHalakim = moladOfMetonicCycle metonicCycle in
@@ -467,6 +483,26 @@ let hebrew_of_sdn sdn =
   in
   { day; month; year; delta = 0; kind = Hebrew }
 
+let islamic_of_sdn sdn =
+  let year =
+    Float.to_int
+    @@ floor (float ((30 * (sdn - islamic_sdn_offset)) + 10_646) /. 10631.)
+  in
+  let islamic_date ~day ~month ~year =
+    { day; month; year; delta = 0; kind = Islamic }
+  in
+  let month =
+    min 12
+      (Float.to_int
+         (ceil
+            (float
+               (sdn - (29 + sdn_of_islamic (islamic_date ~day:1 ~month:1 ~year)))
+            /. 29.5))
+      + 1)
+  in
+  let day = sdn - sdn_of_islamic (islamic_date ~day:1 ~month ~year) + 1 in
+  islamic_date ~day ~month ~year
+
 type erroneous_date_kind = Invalid_day | Invalid_month | Invalid_year
 type 'a erroneous_date = { kind : erroneous_date_kind; value : 'a Unsafe.date }
 
@@ -522,6 +558,9 @@ let make :
     | French ->
         check_month (fun () -> month <= 13) >>= fun () ->
         check_day (fun () -> day <= 30)
+    | Islamic ->
+        check_month (fun () -> month <= 12) >>= fun () ->
+        check_day (fun () -> day <= 30)
   in
   Result.map (fun () -> { day; month; year; delta; kind }) valid
 
@@ -532,30 +571,37 @@ let to_sdn : type a. a date -> sdn =
   | Julian -> sdn_of_julian date
   | French -> sdn_of_french date
   | Hebrew -> sdn_of_hebrew date
+  | Islamic -> sdn_of_islamic date
 
 let to_gregorian : type a. a date -> gregorian date =
  fun date ->
   match date.kind with
   | Gregorian -> date
-  | Julian | French | Hebrew -> to_sdn date |> gregorian_of_sdn
+  | Julian | French | Hebrew | Islamic -> to_sdn date |> gregorian_of_sdn
 
 let to_julian : type a. a date -> julian date =
  fun date ->
   match date.kind with
   | Julian -> date
-  | Gregorian | French | Hebrew -> to_sdn date |> julian_of_sdn
+  | Gregorian | French | Hebrew | Islamic -> to_sdn date |> julian_of_sdn
 
 let to_french : type a. a date -> french date =
  fun date ->
   match date.kind with
   | French -> date
-  | Gregorian | Julian | Hebrew -> to_sdn date |> french_of_sdn
+  | Gregorian | Julian | Hebrew | Islamic -> to_sdn date |> french_of_sdn
 
 let to_hebrew : type a. a date -> hebrew date =
  fun date ->
   match date.kind with
   | Hebrew -> date
-  | Gregorian | Julian | French -> to_sdn date |> hebrew_of_sdn
+  | Gregorian | Julian | French | Islamic -> to_sdn date |> hebrew_of_sdn
+
+let to_islamic : type a. a date -> islamic date =
+ fun date ->
+  match date.kind with
+  | Islamic -> date
+  | Gregorian | Julian | French | Hebrew -> to_sdn date |> islamic_of_sdn
 
 (* Moon phases *)
 (* Borrowed from G.Satre of CNRS's program found at:

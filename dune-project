@@ -10,9 +10,9 @@
 
 (package
   (name calendars)
-  (synopsis "Convert dates between gregorian/julian/french/hebrew calendars")
-  (description "OCaml library to convert dates between gregorian/julian/french/hebrew calendars. Code is originally from Geneweb.")
-  (tags (moon-phase gregorian julian hebrew french-republican calendar date))
+  (synopsis "Convert dates between gregorian/julian/french/hebrew/islamic calendars")
+  (description "OCaml library to convert dates between gregorian/julian/french/hebrew/islamic calendars. Code is originally from Geneweb.")
+  (tags (moon-phase gregorian julian hebrew islamic french-republican calendar date))
   (depends
     (ocaml (>= 4.08))
     (alcotest :with-test)

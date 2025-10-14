@@ -61,6 +61,21 @@ let test_julian_gregorian :
       done
   done
 
+let test : type a. a Calendars.kind -> unit -> unit =
+ fun kind () ->
+  let check =
+    let check ~to_date sdn =
+      Alcotest.check Alcotest.int "" (Calendars.to_sdn @@ to_date sdn) sdn
+    in
+    match kind with
+    | Calendars.Gregorian -> check ~to_date:Calendars.gregorian_of_sdn
+    | Calendars.Julian -> check ~to_date:Calendars.julian_of_sdn
+    | Calendars.French -> check ~to_date:Calendars.french_of_sdn
+    | Calendars.Hebrew -> check ~to_date:Calendars.hebrew_of_sdn
+    | Calendars.Islamic -> check ~to_date:Calendars.islamic_of_sdn
+  in
+  List.iter check (List.init 10_000_000 Fun.id)
+
 let () =
   Alcotest.run "test suite for Calendars"
     [
@@ -76,4 +91,6 @@ let () =
             (test_julian_gregorian Gregorian Calendars.gregorian_of_sdn
                gregorian_feb_len 38);
         ] );
+      ( "Islamic",
+        [ Alcotest.test_case "Islamic" `Quick (test Calendars.Islamic) ] );
     ]
