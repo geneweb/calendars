@@ -8,8 +8,6 @@
  * Copyright 2019, Julien Sagot
  *)
 
-open Calendars
-
 (* gregorian and julian calendar differ by their leap year rules *)
 let julian_feb_len year =
   if (if year < 0 then year + 1 else year) mod 4 = 0 then 29 else 28
@@ -26,7 +24,13 @@ let testable_dmy (_ : _ Calendars.kind) =
     ( = )
 
 let test :
-    type a. a kind -> (int -> a date) -> (int -> int) -> int -> unit -> unit =
+    type a.
+    a Calendars.kind ->
+    (int -> a Calendars.date) ->
+    (int -> int) ->
+    int ->
+    unit ->
+    unit =
  fun kind of_sdn feb_len sdn_offset () ->
   (* we start the loop on 1 january -4713 (SDN=0); but this does not correspond to the same SDN
      for Julian and Gregorian this is why we have a +38 offset for Gregorian calendar *)
@@ -38,7 +42,7 @@ let test :
         let stop = if month = 2 then feb_len year else month_len.(month - 1) in
         for day = 1 to stop do
           let d =
-            match make kind ~day ~month ~year ~delta:0 with
+            match Calendars.make kind ~day ~month ~year ~delta:0 with
             | Ok d -> d
             | Error { Calendars.kind; value } ->
                 failwith
@@ -49,7 +53,7 @@ let test :
                      | Calendars.Invalid_year -> "year")
                      (Calendars.Unsafe.to_string value))
           in
-          let sdn' = to_sdn d in
+          let sdn' = Calendars.to_sdn d in
           Alcotest.check Alcotest.int "" !sdn sdn';
           Alcotest.check (testable_dmy kind) "" d (of_sdn sdn');
           incr sdn
@@ -63,11 +67,11 @@ let _ =
       ( "Julian <-> SDN",
         [
           Alcotest.test_case "julian_of_sdn" `Quick
-            (test Julian julian_of_sdn julian_feb_len 0);
+            (test Julian Calendars.julian_of_sdn julian_feb_len 0);
         ] );
       ( "Gregorian <-> SDN",
         [
           Alcotest.test_case "gregorian_of_sdn" `Quick
-            (test Gregorian gregorian_of_sdn gregorian_feb_len 38);
+            (test Gregorian Calendars.gregorian_of_sdn gregorian_feb_len 38);
         ] );
     ]
