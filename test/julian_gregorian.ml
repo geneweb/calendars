@@ -61,7 +61,7 @@ let test :
       done
   done
 
-let _ =
+let () =
   Alcotest.run "test suite for Calendars"
     [
       ( "Julian <-> SDN",
