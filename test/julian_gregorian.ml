@@ -22,8 +22,7 @@ let month_len = [| 31; 28; 31; 30; 31; 30; 31; 31; 30; 31; 30; 31 |]
 
 let testable_dmy (_ : _ Calendars.kind) =
   Alcotest.testable
-    (fun fmt { day; month; year; _ } ->
-      Format.fprintf fmt "{ day:(%d) ; month:(%d) ; year:(%d) }" day month year)
+    (fun fmt dmy -> Format.pp_print_text fmt (Calendars.Unsafe.to_string dmy))
     ( = )
 
 let test :
