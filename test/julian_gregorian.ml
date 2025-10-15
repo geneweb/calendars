@@ -8,7 +8,6 @@
  * Copyright 2019, Julien Sagot
  *)
 
-open OUnit
 open Calendars
 
 (* gregorian and julian calendar differ by their leap year rules *)
@@ -21,23 +20,15 @@ let gregorian_feb_len year =
 
 let month_len = [| 31; 28; 31; 30; 31; 30; 31; 31; 30; 31; 30; 31 |]
 
-let assert_equal_dmy =
-  assert_equal ~printer:(fun { day; month; year; _ } ->
-      Printf.sprintf "{ day:(%d) ; month:(%d) ; year:(%d) }" day month year)
+let testable_dmy (_ : _ Calendars.kind) =
+  Alcotest.testable
+    (fun fmt { day; month; year; _ } ->
+      Format.fprintf fmt "{ day:(%d) ; month:(%d) ; year:(%d) }" day month year)
+    ( = )
 
-let assert_equal_sdn = assert_equal ~printer:string_of_int
-
-let kind_to_string : type a. a kind -> string =
- fun kind ->
-  match kind with
-  | Gregorian -> "Gregorian"
-  | Julian -> "Julian"
-  | French -> "French"
-  | Hebrew -> "Hebrew"
-
-let test : type a. a kind -> (int -> a date) -> (int -> int) -> int -> test =
- fun kind of_sdn feb_len sdn_offset ->
-  Printf.sprintf "%s <-> SDN" (kind_to_string kind) >:: fun _ ->
+let test :
+    type a. a kind -> (int -> a date) -> (int -> int) -> int -> unit -> unit =
+ fun kind of_sdn feb_len sdn_offset () ->
   (* we start the loop on 1 january -4713 (SDN=0); but this does not correspond to the same SDN
      for Julian and Gregorian this is why we have a +38 offset for Gregorian calendar *)
   let sdn = ref sdn_offset in
@@ -60,17 +51,24 @@ let test : type a. a kind -> (int -> a date) -> (int -> int) -> int -> test =
                      (Calendars.Unsafe.to_string value))
           in
           let sdn' = to_sdn d in
-          assert_equal_sdn !sdn sdn';
-          assert_equal_dmy d (of_sdn sdn');
+          Alcotest.check Alcotest.int "" !sdn sdn';
+          Alcotest.check (testable_dmy kind) "" d (of_sdn sdn');
           incr sdn
         done
       done
   done
 
 let _ =
-  run_test_tt_main
-    ("test suite for Calendars"
-    >::: [
-           test Julian julian_of_sdn julian_feb_len 0;
-           test Gregorian gregorian_of_sdn gregorian_feb_len 38;
-         ])
+  Alcotest.run "test suite for Calendars"
+    [
+      ( "Julian <-> SDN",
+        [
+          Alcotest.test_case "julian_of_sdn" `Quick
+            (test Julian julian_of_sdn julian_feb_len 0);
+        ] );
+      ( "Gregorian <-> SDN",
+        [
+          Alcotest.test_case "gregorian_of_sdn" `Quick
+            (test Gregorian gregorian_of_sdn gregorian_feb_len 38);
+        ] );
+    ]

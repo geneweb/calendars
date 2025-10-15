@@ -15,5 +15,5 @@
   (tags (moon-phase gregorian julian hebrew french-republican calendar date))
   (depends
     (ocaml (>= 4.08))
-    (ounit2 :with-test)
+    (alcotest :with-test)
   ))
