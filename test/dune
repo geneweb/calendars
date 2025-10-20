@@ -1,4 +1,4 @@
 (tests
- (names julian_gregorian)
+ (names test)
  (libraries alcotest calendars)
- (modules julian_gregorian))
+ (modules test))
