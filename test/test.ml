@@ -23,7 +23,7 @@ let testable_dmy (_ : _ Calendars.kind) =
     (fun fmt dmy -> Format.pp_print_text fmt (Calendars.Unsafe.to_string dmy))
     ( = )
 
-let test :
+let test_julian_gregorian :
     type a.
     a Calendars.kind ->
     (int -> a Calendars.date) ->
@@ -67,11 +67,13 @@ let () =
       ( "Julian <-> SDN",
         [
           Alcotest.test_case "julian_of_sdn" `Quick
-            (test Julian Calendars.julian_of_sdn julian_feb_len 0);
+            (test_julian_gregorian Julian Calendars.julian_of_sdn julian_feb_len
+               0);
         ] );
       ( "Gregorian <-> SDN",
         [
           Alcotest.test_case "gregorian_of_sdn" `Quick
-            (test Gregorian Calendars.gregorian_of_sdn gregorian_feb_len 38);
+            (test_julian_gregorian Gregorian Calendars.gregorian_of_sdn
+               gregorian_feb_len 38);
         ] );
     ]
