@@ -19,6 +19,9 @@ let () =
         method makeHebrew day month year =
           make ~day ~month ~year Calendars.Hebrew
 
+        method makeIslamic day month year =
+          make ~day ~month ~year Calendars.Islamic
+
         method day { Calendars.day; _ } = day
         method month { Calendars.month; _ } = month
         method year { Calendars.year; _ } = year
@@ -27,6 +30,7 @@ let () =
         method julianOfSdn = Calendars.julian_of_sdn
         method frenchOfSdn = Calendars.french_of_sdn
         method hebrewOfSdn = Calendars.hebrew_of_sdn
+        method islamicOfSdn = Calendars.islamic_of_sdn
         method toSdn = Calendars.to_sdn
 
         method moonPhaseOfSdn s =
