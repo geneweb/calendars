@@ -1,6 +1,6 @@
 (lang dune 2.9)
 (name calendars)
-(version 1.0.0)
+(version 2.0.0)
 
 (generate_opam_files true)
 (license GPL-2.0-only)
