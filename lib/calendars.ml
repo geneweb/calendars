@@ -553,12 +553,15 @@ let make :
           ~error:(Fun.const @@ check_greg ())
           (check_year (fun () -> year < -45))
     | Hebrew ->
+        check_year (fun () -> year > 0) >>= fun () ->
         check_month (fun () -> month <= 13) >>= fun () ->
         check_day (fun () -> day <= hebrew_nb_days_upper_bound.(month - 1))
     | French ->
+        check_year (fun () -> year > 0) >>= fun () ->
         check_month (fun () -> month <= 13) >>= fun () ->
         check_day (fun () -> day <= 30)
     | Islamic ->
+        check_year (fun () -> year > 0) >>= fun () ->
         check_month (fun () -> month <= 12) >>= fun () ->
         check_day (fun () -> day <= 30)
   in
